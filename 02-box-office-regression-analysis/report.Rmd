@@ -1,0 +1,63 @@
+---
+title: "Hollywood Box Office Revenue Regression Analysis"
+author: "Robert Thomas Kohn"
+date: "Muhlenberg College - Department of Mathematics and Computer Science"
+output:
+  html_document:
+    toc: true
+    theme: readable
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE, fig.width = 7, fig.height = 4.5)
+library(Lock5Data)
+library(mosaic)
+library(lattice)
+```
+
+## 1. Study Overview
+This empirical case study investigates whether opening weekend box office receipts (`OpeningWeekend`, in millions USD) effectively predict lifetime total worldwide gross (`WorldGross`, in millions USD) for feature films in the `HollywoodMovies` dataset ($n = 970$).
+
+## 2. Exploratory Visualization & Correlation
+```{r visual-correlation}
+data(HollywoodMovies)
+
+# Scatterplot with OLS regression line
+xyplot(WorldGross ~ OpeningWeekend, type = c("p", "r"), data = HollywoodMovies,
+       xlab = "Opening Weekend ($ Millions)", ylab = "World Gross ($ Millions)",
+       main = "Worldwide Gross vs. Opening Weekend Revenue", pch = 19, col = "darkred")
+
+# Pearson correlation coefficient
+r_val <- cor(WorldGross ~ OpeningWeekend, use = "pairwise.complete", data = HollywoodMovies)
+cat("Correlation (r):", round(r_val, 4), "\n")
+cat("Coefficient of Determination (R^2):", round(r_val^2, 4), "\n")
+```
+
+## 3. Ordinary Least Squares Regression
+```{r ols-model}
+lm_movies <- lm(WorldGross ~ OpeningWeekend, data = HollywoodMovies)
+summary(lm_movies)
+```
+
+The fitted regression equation is:
+$$\widehat{\text{WorldGross}} = 15.408 + 7.502 \times \text{OpeningWeekend}$$
+
+## 4. Point Prediction ($50M Opening)
+```{r prediction}
+pred_50 <- predict(lm_movies, newdata = data.frame(OpeningWeekend = 50))
+cat("Predicted World Gross for $50M Opening Weekend: $", round(pred_50, 3), "Million\n")
+```
+
+## 5. Outlier Diagnostics: The Great Gatsby (2013)
+```{r outlier-analysis}
+gatsby <- subset(HollywoodMovies, grepl("Gatsby", Movie))
+act_open <- gatsby$OpeningWeekend[1]
+act_gross <- gatsby$WorldGross[1]
+pred_gatsby <- predict(lm_movies, newdata = data.frame(OpeningWeekend = act_open))
+residual_gatsby <- act_gross - pred_gatsby
+
+cat("Opening Weekend:", act_open, "Million\n")
+cat("Actual World Gross:", act_gross, "Million\n")
+cat("Predicted World Gross:", round(pred_gatsby, 2), "Million\n")
+cat("Residual (Observed - Predicted):", round(residual_gatsby, 2), "Million\n")
+```
