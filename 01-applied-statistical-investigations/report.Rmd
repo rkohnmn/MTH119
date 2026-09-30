@@ -1,0 +1,151 @@
+---
+title: "Applied Statistical Investigations: MTH 119 Capstone Report"
+author: "Robert Thomas Kohn"
+date: "Muhlenberg College - Department of Mathematics and Computer Science"
+output:
+  html_document:
+    toc: true
+    toc_depth: 3
+    theme: readable
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE, fig.width = 7, fig.height = 4.5)
+library(Lock5Data)
+library(mosaic)
+library(lattice)
+library(ggformula)
+```
+
+## 1. Categorical vs. Categorical: Substance Choice and Housing Status
+
+### Research Question
+For patients admitted to a clinical detoxification unit, is there a statistically significant association between their primary substance of abuse and their housing status?
+
+### Data & Summary
+```{r helprct-data}
+data(HELPrct)
+
+# Two-way contingency table of counts
+tally_counts <- tally(substance ~ homeless, data = HELPrct)
+tally_counts
+
+# Conditional proportions by substance
+tally(~ homeless | substance, format = "proportion", data = HELPrct)
+```
+
+### Hypothesis Test: Chi-Square Test of Independence
+- $H_0$: Primary substance choice and housing status are independent.
+- $H_a$: Primary substance choice and housing status are not independent.
+
+```{r helprct-chisq}
+xchisq.test(tally_counts)
+```
+
+### Conclusion
+Because the $p$-value ($0.000202$) is far below $\alpha = 0.05$, we reject $H_0$. There is strong evidence that primary substance choice and housing status are dependent. Detoxification unit patients with alcohol dependency are significantly more likely to be homeless ($\approx 58.2\%$), whereas patients reporting cocaine ($\approx 38.8\%$) or heroin ($\approx 37.9\%$) use are more frequently housed.
+
+---
+
+## 2. Quantitative vs. Categorical I: Server Effect on Restaurant Bill Size
+
+### Research Question
+Is there a statistically significant difference in mean customer bill amounts across different servers at a dining establishment?
+
+### Data & Summary
+```{r tips-data}
+data(RestaurantTips)
+
+# Summary statistics by server
+favstats(Bill ~ Server, data = RestaurantTips)
+```
+
+### Graphical Summaries & Assumption Checks
+```{r tips-plots}
+# Side-by-side boxplot
+bwplot(Bill ~ Server, data = RestaurantTips, main = "Bill Amount by Server")
+
+# Normal Q-Q plot for assumption verification
+xqqmath(~ Bill | Server, data = RestaurantTips, main = "Normal Q-Q Plot: Bill by Server")
+```
+
+### Hypothesis Test: One-Way ANOVA
+- $H_0: \mu_A = \mu_B = \mu_C$
+- $H_a$: At least one server population mean bill is different.
+
+```{r tips-anova}
+aov_tips <- aov(Bill ~ Server, data = RestaurantTips)
+summary(aov_tips)
+```
+
+### Conclusion
+With an $F$-statistic of $1.671$ and $p$-value of $0.191 > 0.05$, we fail to reject $H_0$. There is insufficient evidence to conclude that mean customer bill amounts vary significantly across servers.
+
+---
+
+## 3. Quantitative vs. Categorical II: Commuting Time by Bicycle Frame Material
+
+### Research Question
+Are mean commuting travel times different depending on whether a carbon fiber or steel frame bicycle is used?
+
+### Data & Summary
+```{r bike-data}
+data(BikeCommute)
+
+# Summary statistics by bike frame
+favstats(Minutes ~ Bike, data = BikeCommute)
+```
+
+### Graphical Summaries & Diagnostics
+```{r bike-plots}
+# Dotplot of commute minutes
+gf_dotplot(~ Minutes | Bike, data = BikeCommute, title = "Commute Duration by Bike Frame")
+
+# Boxplot
+bwplot(Minutes ~ Bike, data = BikeCommute, main = "Commute Minutes by Bike Frame")
+
+# Normal Q-Q plot
+xqqmath(~ Minutes | Bike, data = BikeCommute, main = "Normal Q-Q Plot: Minutes by Bike")
+```
+
+### Hypothesis Test: Welch Two-Sample $t$-Test
+- $H_0: \mu_{\text{carbon}} - \mu_{\text{steel}} = 0$
+- $H_a: \mu_{\text{carbon}} - \mu_{\text{steel}} \ne 0$
+
+```{r bike-ttest}
+t.test(Minutes ~ Bike, data = BikeCommute, conf.level = 0.95)
+```
+
+### Conclusion
+With $t = 0.3656$ and $p = 0.7163 > 0.05$, we fail to reject $H_0$. The data shows no statistically significant difference in mean commute time between carbon and steel frames. The 95% confidence interval for the mean difference is $[-2.49, 3.60]$ minutes.
+
+---
+
+## 4. Quantitative vs. Quantitative: MLB Team Wins and Runs Batted In
+
+### Research Question
+What is the relationship between regular season Major League Baseball team wins and Runs Batted In (RBIs)?
+
+### Data & Scatterplot
+```{r mlb-data}
+data(BaseballHits2019)
+
+# Scatterplot with fitted regression line
+xyplot(Wins ~ RBI, type = c("p", "r"), data = BaseballHits2019,
+       main = "2019 MLB Wins vs. Runs Batted In (RBI)", pch = 19, col = "navy")
+```
+
+### Correlation & Linear Model
+```{r mlb-model}
+# Correlation
+r_val <- cor(Wins ~ RBI, data = BaseballHits2019)
+cat("Correlation (r):", round(r_val, 4), "\n")
+cat("R-squared:", round(r_val^2, 4), "\n")
+
+# Linear model
+lm_base <- lm(Wins ~ RBI, data = BaseballHits2019)
+summary(lm_base)
+```
+
+### Conclusion
+We reject $H_0: \beta_1 = 0$ ($t = 7.507, p = 3.55 \times 10^{-8} < 0.001$). Team RBIs exhibit a strong, statistically significant positive linear relationship with team wins. The fitted regression equation is $\widehat{\text{Wins}} = -30.82 + 0.149 \times \text{RBI}$, explaining approximately $66.8\%$ of the variance in regular season wins.
