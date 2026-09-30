@@ -1,0 +1,29 @@
+# R history and workspace images
+.Rhistory
+.RData
+.RDataTmp
+.Ruserdata
+
+# RStudio project files and user settings
+.Rproj.user/
+*.Rproj.user
+
+# Operating System files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Temporary and autosave files
+*~
+*.tmp
+*.bak
+*.swp
+*.swo
+
+# R Markdown / Knitr build cache and temporary artifacts
+/*_cache/
+/*_files/
+.Rcheck/
+
+# Audit report (private review document for Robert Kohn)
+COURSEWORK_REVIEW.md
